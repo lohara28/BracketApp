@@ -4,7 +4,7 @@ const Home = () => {
             <div className="text-center max-w-xl bg-white bg-opacity-80 backdrop-blur-md rounded-2xl p-10 shadow-2xl">
                 <h1 className="text-4xl font-bold text-indigo-800 mb-4">🏆 Welcome to Bracketology</h1>
                 <p className="text-lg text-gray-700 mb-6">
-                    Create, customize, and share your own tournament brackets. Whether it's March Madness, World Cup, or anything else — we've got you covered.
+                    Create,  customize, and share your own tournament brackets. Whether it's March Madness, World Cup, or anything else — we've got you covered.
                 </p>
                 <a 
                     href="/create" 
