@@ -9,7 +9,7 @@ const Navbar = () => {
 
                 {/* Navigation Links */}
                 <div className="space-x-4 hidden md:flex font-serif">
-                    <a href="/" className="hover:underline">Home</a>
+                    <a href="/home" className="hover:underline">Home</a>
                     <a href="/create" className="hover:underline">Brackets</a>
                     <a href="/about" className="hover:underline">About</a>
                 </div>

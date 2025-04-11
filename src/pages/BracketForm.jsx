@@ -66,6 +66,15 @@ const BracketForm = () => {
         await addDoc(collection(db, 'brackets'), formData);
         alert('Bracket submitted successfully!');
         // Optionally, reset the form here
+        setBracketName('');
+        setBracketSize('');
+        setBackgroundColor('#ffffff');
+        setLineColor('#000000');
+        setTeamBoxColor('#cccccc');
+        setFirstName('');
+        setLastName('');
+        setEmail('');
+        setTeams([{ name: '', seed: '' }]);
       } catch (error) {
         console.error('Error saving bracket to Firestore:', error);
         alert('There was an error submitting your bracket. Please try again.');
