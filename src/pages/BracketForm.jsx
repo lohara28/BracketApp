@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { db } from '../utils/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 const BracketForm = () => {
   const [bracketName, setBracketName] = useState('');
@@ -45,22 +47,29 @@ const BracketForm = () => {
     return true;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (isFormValid()) {
       const formData = {
         bracketName,
-        bracketSize,
+        bracketSize: parseInt(bracketSize),
         backgroundColor,
         lineColor,
         teamBoxColor,
         firstName,
         lastName,
         email,
-        teams,
+        teams
       };
-      console.log("Form Submitted:", formData);
-      // Further processing (e.g., API call) can be done here.
+  
+      try {
+        await addDoc(collection(db, 'brackets'), formData);
+        alert('Bracket submitted successfully!');
+        // Optionally, reset the form here
+      } catch (error) {
+        console.error('Error saving bracket to Firestore:', error);
+        alert('There was an error submitting your bracket. Please try again.');
+      }
     } else {
       alert("Please fill out all required fields.");
     }
