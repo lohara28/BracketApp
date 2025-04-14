@@ -24,7 +24,7 @@ const About = () => {
                             className="w-32 h-32 rounded-full mx-auto mb-4 shadow-lg"
                         />
                         <h3 className="font-semibold text-indigo-800">Liam Campbell</h3>
-                        <p className="text-gray-600">N/A</p>
+                        <p className="text-gray-600">Master's in Procrastination</p>
                     </div>
 
                     {/* Person 3 */}

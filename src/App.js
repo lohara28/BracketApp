@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router";
+import { Routes, Route, useLocation } from "react-router";
 import Home from "./pages/Home";
 import Navbar from "./pages/Navbar";
 import BracketForm from "./pages/BracketForm";
@@ -8,10 +8,15 @@ import { useAuth } from "./contexts/AuthContexts";
 
 function App() {
   const { user } = useAuth();
+  const location = useLocation();
+
+  const hideNavbarPaths = ["/"]; // paths where Navbar should be hidden
+
+  const shouldShowNavbar = user && !hideNavbarPaths.includes(location.pathname);
 
   return (
     <div>
-      {user && <Navbar />}
+      {shouldShowNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<AuthPage />} />
         <Route path="/home" element={<Home />} />
