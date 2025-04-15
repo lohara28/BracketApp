@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { db } from '../utils/firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router';
+import { getAuth } from 'firebase/auth';
 
 const BracketForm = () => {
   const [bracketName, setBracketName] = useState('');
@@ -12,6 +14,10 @@ const BracketForm = () => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [teams, setTeams] = useState([{ name: '', seed: '' }]);
+
+  const navigate = useNavigate();
+
+  const user = getAuth().currentUser;
 
   // Adds a new empty team entry.
   const handleAddTeam = () => {
@@ -51,6 +57,7 @@ const BracketForm = () => {
     e.preventDefault();
     if (isFormValid()) {
       const formData = {
+        userId: user?.uid,
         bracketName,
         bracketSize: parseInt(bracketSize),
         backgroundColor,
@@ -63,20 +70,11 @@ const BracketForm = () => {
       };
   
       try {
-        await addDoc(collection(db, 'brackets'), formData);
-        alert('Bracket submitted successfully!');
-        // Optionally, reset the form here
-        setBracketName('');
-        setBracketSize('');
-        setBackgroundColor('#ffffff');
-        setLineColor('#000000');
-        setTeamBoxColor('#cccccc');
-        setFirstName('');
-        setLastName('');
-        setEmail('');
-        setTeams([{ name: '', seed: '' }]);
+        const docRef = await addDoc(collection(db, 'brackets'), formData);
+        // Directly navigate to BracketDisplay without using an alert
+        navigate('/bracket-display', { state: { bracket: formData, id: docRef.id } });
       } catch (error) {
-        console.error('Error saving bracket to Firestore:', error);
+        console.error('Error saving bracket to Firestore:', error.message, error);
         alert('There was an error submitting your bracket. Please try again.');
       }
     } else {

@@ -3,8 +3,10 @@ import Home from "./pages/Home";
 import Navbar from "./pages/Navbar";
 import BracketForm from "./pages/BracketForm";
 import About from "./pages/About";
+import BracketDisplay from "./pages/BracketDisplay";
 import AuthPage from "./pages/AuthPage";
 import { useAuth } from "./contexts/AuthContexts";
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   const { user } = useAuth();
@@ -19,9 +21,12 @@ function App() {
       {shouldShowNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<AuthPage />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/create" element={<BracketForm />} />
-        <Route path="/about" element={<About />} />
+
+         {/* Protected Routes */}
+        <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
+        <Route path="/create" element={<PrivateRoute><BracketForm /></PrivateRoute>} />
+        <Route path="/about" element={<PrivateRoute><About /></PrivateRoute>} />
+        <Route path="/my-brackets" element={<PrivateRoute><BracketDisplay /></PrivateRoute>} />
       </Routes>
     </div>
   );

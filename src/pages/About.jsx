@@ -19,7 +19,7 @@ const About = () => {
                     {/* Person 2 */}
                     <div className="text-center">
                         <img 
-                            src="https://via.placeholder.com/150" 
+                            src="./mcqueen.jpg" 
                             alt="Creator 2" 
                             className="w-32 h-32 rounded-full mx-auto mb-4 shadow-lg"
                         />

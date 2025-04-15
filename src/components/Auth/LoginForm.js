@@ -15,6 +15,7 @@ const LoginForm = () => {
     setErrorMsg(''); // Clear any previous error
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      console.log('Logged in user:', auth.currentUser);  // Log the current user after login
       navigate('/home');
     } catch (error) {
       setErrorMsg(error.message);
