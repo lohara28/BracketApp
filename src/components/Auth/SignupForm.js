@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../../utils/firebase';
+import { db } from '../../utils/firebase';
+import { useAuth } from '../../contexts/AuthContexts';
 
 const SignupForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const { signup } = useAuth();
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    setErrorMsg(''); // Clear previous error
+    setErrorMsg('');
+    setLoading(true);
+
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await signup(email, password);
       const user = userCredential.user;
 
+      // Create a user document in Firestore
       await setDoc(doc(db, 'users', user.uid), {
         email,
         createdAt: new Date()
@@ -26,6 +31,8 @@ const SignupForm = () => {
       navigate('/home');
     } catch (error) {
       setErrorMsg(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,8 +62,12 @@ const SignupForm = () => {
         onChange={(e) => setPassword(e.target.value)}
         required
       />
-      <button className="w-full bg-blue-500 text-white p-2 rounded" type="submit">
-        Sign Up
+      <button 
+        className="w-full bg-blue-500 text-white p-2 rounded disabled:opacity-50" 
+        type="submit"
+        disabled={loading}
+      >
+        {loading ? 'Creating account...' : 'Sign Up'}
       </button>
     </form>
   );

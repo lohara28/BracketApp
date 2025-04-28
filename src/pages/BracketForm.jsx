@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { db } from '../utils/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router';
-import { getAuth } from 'firebase/auth';
+import { useAuth } from '../contexts/AuthContexts';
 
 const BracketForm = () => {
   const [bracketName, setBracketName] = useState('');
@@ -10,14 +10,9 @@ const BracketForm = () => {
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
   const [lineColor, setLineColor] = useState('#000000');
   const [teamBoxColor, setTeamBoxColor] = useState('#cccccc');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
   const [teams, setTeams] = useState([{ name: '', seed: '' }]);
-
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  const user = getAuth().currentUser;
 
   // Adds a new empty team entry.
   const handleAddTeam = () => {
@@ -34,18 +29,7 @@ const BracketForm = () => {
 
   // Simple form validation: all fields must have a value and each team must have a name and seed.
   const isFormValid = () => {
-    if (
-      !bracketName ||
-      !bracketSize ||
-      !backgroundColor ||
-      !lineColor ||
-      !teamBoxColor ||
-      !firstName ||
-      !lastName ||
-      !email
-    ) {
-      return false;
-    }
+    if (!bracketName || !bracketSize) return false;
     if (teams.length === 0) return false;
     for (let team of teams) {
       if (!team.name || !team.seed) return false;
@@ -55,26 +39,24 @@ const BracketForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isFormValid()) {
+    if (isFormValid() && user) {
       const formData = {
-        userId: user?.uid,
+        email: user.email,
         bracketName,
         bracketSize: parseInt(bracketSize),
         backgroundColor,
         lineColor,
         teamBoxColor,
-        firstName,
-        lastName,
-        email,
-        teams
+        teams,
+        createdAt: new Date()
       };
   
       try {
-        const docRef = await addDoc(collection(db, 'brackets'), formData);
-        // Directly navigate to BracketDisplay without using an alert
-        navigate('/bracket-display', { state: { bracket: formData, id: docRef.id } });
+        console.log('Saving bracket with data:', formData); // Debug log
+        await addDoc(collection(db, 'brackets'), formData);
+        navigate('/my-brackets');
       } catch (error) {
-        console.error('Error saving bracket to Firestore:', error.message, error);
+        console.error('Error saving bracket to Firestore:', error);
         alert('There was an error submitting your bracket. Please try again.');
       }
     } else {
@@ -85,7 +67,7 @@ const BracketForm = () => {
   return (
     <div className="flex items-center justify-center min-h-screen py-10 bg-gray-100">
       <form className="w-full max-w-lg bg-white p-8 rounded shadow" onSubmit={handleSubmit}>
-        {/* Line 1: Bracket Name */}
+        {/* Bracket Name */}
         <div className="mb-6">
           <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="bracket-name">
             Bracket Name
@@ -94,151 +76,101 @@ const BracketForm = () => {
             className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
             id="bracket-name"
             type="text"
-            placeholder="Bracket"
+            placeholder="Bracket Name"
             value={bracketName}
             onChange={(e) => setBracketName(e.target.value)}
+            required
           />
         </div>
 
-        {/* Line 2: Size of Bracket */}
+        {/* Bracket Size */}
         <div className="mb-6">
           <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="bracket-size">
-            Size of Bracket (Number of Teams)
+            Bracket Size
           </label>
           <input
             className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
             id="bracket-size"
             type="number"
-            placeholder="e.g., 64"
+            placeholder="Number of teams"
             value={bracketSize}
             onChange={(e) => setBracketSize(e.target.value)}
+            required
           />
         </div>
 
-        {/* Line 3: Background Color for the bracket creation screen */}
-        <div className="mb-6">
-          <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="background-color">
-            Background Color for Bracket Creation Screen
-          </label>
-          <input
-            className="appearance-none block w-full h-10 bg-gray-200 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
-            id="background-color"
-            type="color"
-            value={backgroundColor}
-            onChange={(e) => setBackgroundColor(e.target.value)}
-          />
-        </div>
-
-        {/* Line 4: Color of lines between teams */}
-        <div className="mb-6">
-          <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="line-color">
-            Color of Lines Between Teams
-          </label>
-          <input
-            className="appearance-none block w-full h-10 bg-gray-200 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
-            id="line-color"
-            type="color"
-            value={lineColor}
-            onChange={(e) => setLineColor(e.target.value)}
-          />
-        </div>
-
-        {/* Line 5: Color of Team Boxes */}
-        <div className="mb-6">
-          <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="team-box-color">
-            Color of Team Boxes
-          </label>
-          <input
-            className="appearance-none block w-full h-10 bg-gray-200 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
-            id="team-box-color"
-            type="color"
-            value={teamBoxColor}
-            onChange={(e) => setTeamBoxColor(e.target.value)}
-          />
-        </div>
-
-        {/* Line 6: Name (first and last on the same line) */}
-        <div className="flex flex-wrap -mx-3 mb-6">
-          <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
-            <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="first-name">
-              First Name
+        {/* Color Pickers */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div>
+            <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
+              Background Color
             </label>
             <input
-              className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
-              id="first-name"
-              type="text"
-              placeholder="First Name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              type="color"
+              value={backgroundColor}
+              onChange={(e) => setBackgroundColor(e.target.value)}
+              className="w-full h-10"
             />
           </div>
-          <div className="w-full md:w-1/2 px-3">
-            <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="last-name">
-              Last Name
+          <div>
+            <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
+              Line Color
             </label>
             <input
-              className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
-              id="last-name"
-              type="text"
-              placeholder="Last Name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
+              type="color"
+              value={lineColor}
+              onChange={(e) => setLineColor(e.target.value)}
+              className="w-full h-10"
+            />
+          </div>
+          <div>
+            <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
+              Team Box Color
+            </label>
+            <input
+              type="color"
+              value={teamBoxColor}
+              onChange={(e) => setTeamBoxColor(e.target.value)}
+              className="w-full h-10"
             />
           </div>
         </div>
 
-        {/* Line 7: Email Address */}
-        <div className="mb-6">
-          <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="email">
-            Email Address
-          </label>
-          <input
-            className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
-            id="email"
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-
-        {/* Line 9: Add teams and their seeds */}
+        {/* Teams */}
         <div className="mb-6">
           <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
-            Teams and Their Seeds
+            Teams
           </label>
           {teams.map((team, index) => (
-            <div key={index} className="flex flex-wrap -mx-3 mb-3">
-              <div className="w-full md:w-2/3 px-3">
-                <input
-                  className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
-                  type="text"
-                  placeholder="Team Name"
-                  value={team.name}
-                  onChange={(e) => handleTeamChange(index, 'name', e.target.value)}
-                />
-              </div>
-              <div className="w-full md:w-1/3 px-3">
-                <input
-                  className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
-                  type="number"
-                  placeholder="Seed"
-                  value={team.seed}
-                  onChange={(e) => handleTeamChange(index, 'seed', e.target.value)}
-                />
-              </div>
+            <div key={index} className="flex gap-4 mb-2">
+              <input
+                className="appearance-none block w-3/4 bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
+                type="text"
+                placeholder="Team Name"
+                value={team.name}
+                onChange={(e) => handleTeamChange(index, 'name', e.target.value)}
+                required
+              />
+              <input
+                className="appearance-none block w-1/4 bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white"
+                type="number"
+                placeholder="Seed"
+                value={team.seed}
+                onChange={(e) => handleTeamChange(index, 'seed', e.target.value)}
+                required
+              />
             </div>
           ))}
           <button
             type="button"
             onClick={handleAddTeam}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
             Add Team
           </button>
         </div>
 
-        {/* Line 10: Submit Button (disabled until all required fields are filled) */}
+        {/* Submit Button */}
         <div className="flex justify-center">
           <button
             type="submit"
@@ -247,7 +179,7 @@ const BracketForm = () => {
               isFormValid() ? 'bg-green-500 hover:bg-green-700' : 'bg-gray-500 cursor-not-allowed'
             } text-white font-bold py-2 px-4 rounded`}
           >
-            Submit
+            Create Bracket
           </button>
         </div>
       </form>

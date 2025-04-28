@@ -1,24 +1,28 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../utils/firebase';
+import { useAuth } from '../../contexts/AuthContexts';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setErrorMsg(''); // Clear any previous error
+    setErrorMsg('');
+    setLoading(true);
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      console.log('Logged in user:', auth.currentUser);  // Log the current user after login
+      await login(email, password);
       navigate('/home');
     } catch (error) {
       setErrorMsg(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,8 +52,12 @@ const LoginForm = () => {
         onChange={(e) => setPassword(e.target.value)}
         required
       />
-      <button className="w-full bg-green-500 text-white p-2 rounded" type="submit">
-        Log In
+      <button 
+        className="w-full bg-green-500 text-white p-2 rounded disabled:opacity-50" 
+        type="submit"
+        disabled={loading}
+      >
+        {loading ? 'Logging in...' : 'Log In'}
       </button>
     </form>
   );
