@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { 
   onAuthStateChanged, 
   signInWithEmailAndPassword, 
@@ -7,11 +7,16 @@ import {
   setPersistence,
   browserLocalPersistence
 } from "firebase/auth";
-import { auth } from "../utils/firebase";
+import { auth, db } from "../utils/firebase";
+import { doc, setDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -32,18 +37,31 @@ export const AuthProvider = ({ children }) => {
       });
   }, []);
 
-  const login = async (email, password) => {
+  const signup = async (email, password, firstName, lastName) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Create a user document in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        email,
+        firstName,
+        lastName,
+        createdAt: new Date()
+      });
+
+      return userCredential;
     } catch (error) {
+      console.error('Signup error:', error);
       throw error;
     }
   };
 
-  const signup = async (email, password) => {
+  const login = async (email, password) => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      return await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
@@ -52,6 +70,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await signOut(auth);
     } catch (error) {
+      console.error('Logout error:', error);
       throw error;
     }
   };
@@ -59,8 +78,8 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
-    login,
     signup,
+    login,
     logout
   };
 
@@ -69,12 +88,4 @@ export const AuthProvider = ({ children }) => {
       {!loading && children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+}

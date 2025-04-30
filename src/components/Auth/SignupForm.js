@@ -1,76 +1,154 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../../utils/firebase';
 import { useAuth } from '../../contexts/AuthContexts';
 
 const SignupForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+        confirmPassword: '',
+        firstName: '',
+        lastName: ''
+    });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+    const { signup } = useAuth();
 
-  const navigate = useNavigate();
-  const { signup } = useAuth();
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
 
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    setErrorMsg('');
-    setLoading(true);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
 
-    try {
-      const userCredential = await signup(email, password);
-      const user = userCredential.user;
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
+            setLoading(false);
+            return;
+        }
 
-      // Create a user document in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        email,
-        createdAt: new Date()
-      });
+        if (formData.password.length < 6) {
+            setError('Password must be at least 6 characters');
+            setLoading(false);
+            return;
+        }
 
-      navigate('/home');
-    } catch (error) {
-      setErrorMsg(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+        try {
+            await signup(formData.email, formData.password, formData.firstName, formData.lastName);
+            navigate('/home');
+        } catch (err) {
+            console.error('Signup error:', err);
+            setError(err.message || 'Failed to create an account');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <form onSubmit={handleSignup}>
-      <h2 className="text-xl font-bold mb-4">Sign Up</h2>
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-md w-full space-y-8">
+                <div>
+                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                        Create your account
+                    </h2>
+                </div>
+                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                    {error && (
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                            <span className="block sm:inline">{error}</span>
+                        </div>
+                    )}
+                    <div className="rounded-md shadow-sm -space-y-px">
+                        <div>
+                            <label htmlFor="firstName" className="sr-only">First Name</label>
+                            <input
+                                id="firstName"
+                                name="firstName"
+                                type="text"
+                                required
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                placeholder="First Name"
+                                value={formData.firstName}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="lastName" className="sr-only">Last Name</label>
+                            <input
+                                id="lastName"
+                                name="lastName"
+                                type="text"
+                                required
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                placeholder="Last Name"
+                                value={formData.lastName}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="email" className="sr-only">Email address</label>
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                autoComplete="email"
+                                required
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                placeholder="Email address"
+                                value={formData.email}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="password" className="sr-only">Password</label>
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                autoComplete="new-password"
+                                required
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                placeholder="Password"
+                                value={formData.password}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
+                            <input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type="password"
+                                autoComplete="new-password"
+                                required
+                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                placeholder="Confirm Password"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                            />
+                        </div>
+                    </div>
 
-      {errorMsg && (
-        <div className="mb-4 p-2 bg-red-100 text-red-700 border border-red-300 rounded">
-          {errorMsg}
+                    <div>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                        >
+                            {loading ? 'Creating Account...' : 'Sign up'}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-      )}
-
-      <input
-        className="w-full mb-2 p-2 border rounded"
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
-      <input
-        className="w-full mb-4 p-2 border rounded"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
-      <button 
-        className="w-full bg-blue-500 text-white p-2 rounded disabled:opacity-50" 
-        type="submit"
-        disabled={loading}
-      >
-        {loading ? 'Creating account...' : 'Sign Up'}
-      </button>
-    </form>
-  );
+    );
 };
 
 export default SignupForm;
